@@ -1,0 +1,234 @@
+name: go-agent
+
+x-backend-environment: &backend-environment
+  HTTP_ADDR: 0.0.0.0:8080
+  GIN_MODE: release
+  MILVUS_ADDR: standalone:19530
+  MILVUS_USERNAME: ${MILVUS_USERNAME:-}
+  MILVUS_PASSWORD: ${MILVUS_PASSWORD:-}
+  MYSQL_HOST: mysql
+  MYSQL_PORT: "3306"
+  MYSQL_DATABASE: ${MYSQL_DATABASE:-go_agentery}
+  MYSQL_USER: ${MYSQL_USER:-go_agentery}
+  MYSQL_PASSWORD: ${MYSQL_PASSWORD:-go_agentery}
+  REDIS_ADDR: redis:6379
+  REDIS_PASSWORD: ${REDIS_PASSWORD:-go_agentery_redis}
+  REDIS_DB: ${REDIS_DB:-0}
+  HISTORY_CONTEXT_LIMIT: ${HISTORY_CONTEXT_LIMIT:-40}
+  JWT_SECRET: ${JWT_SECRET:-go-agent-change-me-in-production}
+  ANALYTICS_MYSQL_DSN: ${ANALYTICS_MYSQL_DSN:-go_analytics_ro:go_analytics_ro@tcp(mysql:3306)/go_agentery?charset=utf8mb4&parseTime=True&loc=Local}
+  ARK_KEY: ${ARK_KEY:-}
+  ARK_MODEL: ${ARK_MODEL:-}
+  EMBEDDER: ${EMBEDDER:-}
+  CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+
+services:
+  frontend:
+    container_name: go-agent-web
+    image: go-agent-frontend:latest
+    build:
+      context: ./frontend
+    ports:
+      - "5678:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  backend:
+    container_name: go-agent-api
+    image: go-agent-backend:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    expose:
+      - "8080"
+    environment:
+      <<: *backend-environment
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      standalone:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  rag-index:
+    container_name: go-agent-rag-index
+    image: go-agent-backend:latest
+    profiles:
+      - tools
+    build:
+      context: .
+      dockerfile: Dockerfile
+    entrypoint: ["/app/rag-index"]
+    command: ["-source", "/app/knowledge/ecommerce_semantics.md", "-drop"]
+    environment:
+      <<: *backend-environment
+    depends_on:
+      standalone:
+        condition: service_healthy
+    restart: "no"
+
+  seed:
+    container_name: go-agent-seed
+    image: go-agent-backend:latest
+    profiles:
+      - tools
+    build:
+      context: .
+      dockerfile: Dockerfile
+    entrypoint: ["/app/seed"]
+    command: ["-months", "6", "-orders", "12000"]
+    environment:
+      <<: *backend-environment
+      ANALYTICS_MYSQL_DSN: ${MYSQL_USER:-go_agentery}:${MYSQL_PASSWORD:-go_agentery}@tcp(mysql:3306)/${MYSQL_DATABASE:-go_agentery}?charset=utf8mb4&parseTime=True&loc=Local
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: "no"
+
+  mysql:
+    container_name: go-agent-mysql
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-go_agentery}
+      MYSQL_USER: ${MYSQL_USER:-go_agentery}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-go_agentery}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-go_agentery_root}
+      TZ: Asia/Shanghai
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "13306:3306"
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/mysql:/var/lib/mysql
+      - ./scripts/mysql-init.sql:/docker-entrypoint-initdb.d/01-analytics-readonly.sql:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  redis:
+    container_name: go-agent-redis
+    image: redis:7.4-alpine
+    command:
+      [
+        "redis-server",
+        "--appendonly",
+        "yes",
+        "--requirepass",
+        "${REDIS_PASSWORD:-go_agentery_redis}",
+      ]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-go_agentery_redis}
+    ports:
+      - "16379:6379"
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/redis:/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "redis-cli -a $${REDIS_PASSWORD} ping | grep -q PONG",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  etcd:
+    container_name: go-agent-etcd
+    image: quay.io/coreos/etcd:v3.5.18
+    environment:
+      ETCD_AUTO_COMPACTION_MODE: revision
+      ETCD_AUTO_COMPACTION_RETENTION: "1000"
+      ETCD_QUOTA_BACKEND_BYTES: "4294967296"
+      ETCD_SNAPSHOT_COUNT: "50000"
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/etcd:/etcd
+    command: etcd -advertise-client-urls=http://etcd:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  minio:
+    container_name: go-agent-minio
+    image: minio/minio:latest
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    ports:
+      - "9001:9001"
+      - "9000:9000"
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/minio:/minio_data
+    command: minio server /minio_data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  standalone:
+    container_name: go-agent-milvus
+    image: milvusdb/milvus:v2.5.10
+    command: ["milvus", "run", "standalone"]
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/milvus:/var/lib/milvus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      start_period: 90s
+      timeout: 20s
+      retries: 3
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    depends_on:
+      etcd:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  attu:
+    container_name: go-agent-attu
+    image: zilliz/attu:v2.5
+    ports:
+      - "8000:3000"
+    environment:
+      MILVUS_URL: standalone:19530
+    depends_on:
+      standalone:
+        condition: service_healthy
+
+networks:
+  default:
+    name: go-agent

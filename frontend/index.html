@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f4f6f3" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>DataPilot 电商经营分析 Agent</title>
+  </head>
+  <body>
+    <div id="app">
+      <section id="auth-view" class="auth-view">
+        <div class="auth-shell">
+          <aside class="auth-showcase">
+            <div class="auth-showcase-head">
+              <span class="brand-mark">
+                <i data-lucide="bar-chart-3"></i>
+              </span>
+              <div>
+                <strong>DataPilot</strong>
+                <span>Analytics Agent</span>
+              </div>
+            </div>
+
+            <div class="auth-showcase-copy">
+              <span class="auth-kicker">AI DATA ANALYSIS</span>
+              <h1>把经营问题<br />变成可验证的答案</h1>
+              <p>连接指标、SQL 和图表，让每一次分析都有迹可循。</p>
+            </div>
+
+            <div class="auth-photo-grid" aria-hidden="true">
+              <figure class="auth-photo auth-photo--main">
+                <img src="/ecommerce-preview.jpg" alt="" />
+                <figcaption>
+                  <span>经营增长</span>
+                  <strong>+18.4%</strong>
+                </figcaption>
+              </figure>
+              <div class="auth-photo-side">
+                <figure class="auth-photo auth-photo--small">
+                  <img src="/logistics-preview.jpg" alt="" />
+                </figure>
+                <div class="auth-kpi-card">
+                  <span>退款率</span>
+                  <strong>3.8%</strong>
+                  <small>环比下降 0.6%</small>
+                </div>
+              </div>
+            </div>
+
+            <p class="auth-showcase-foot">Read-only SQL · Traceable execution</p>
+          </aside>
+
+          <section class="auth-panel">
+            <div class="auth-mobile-brand">
+              <span class="brand-mark">
+                <i data-lucide="bar-chart-3"></i>
+              </span>
+              <div>
+                <strong>DataPilot</strong>
+                <span>Analytics Agent</span>
+              </div>
+              <img class="auth-mobile-photo" src="/ecommerce-preview.jpg" alt="" />
+            </div>
+
+            <header class="auth-panel-head">
+              <span id="auth-mode-label">ACCOUNT ACCESS</span>
+              <h2 id="auth-title">欢迎回来</h2>
+              <p id="auth-subtitle">登录后继续你的经营分析任务</p>
+            </header>
+
+            <div class="auth-tabs" role="tablist" aria-label="账号操作">
+              <button
+                id="login-tab"
+                class="auth-tab is-active"
+                type="button"
+                role="tab"
+                aria-selected="true"
+                data-auth-mode="login"
+              >
+                登录
+              </button>
+              <button
+                id="register-tab"
+                class="auth-tab"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                data-auth-mode="register"
+              >
+                注册
+              </button>
+            </div>
+
+            <form id="auth-form" class="auth-form">
+              <label class="field">
+                <span class="field-label">
+                  <span>用户名</span>
+                  <small>3-32 个字符</small>
+                </span>
+                <span class="field-input">
+                  <i data-lucide="user-round"></i>
+                  <input
+                    id="auth-username"
+                    name="username"
+                    type="text"
+                    placeholder="输入用户名"
+                    autocomplete="username"
+                    minlength="3"
+                    maxlength="32"
+                    required
+                  />
+                </span>
+              </label>
+
+              <label class="field">
+                <span class="field-label">
+                  <span>密码</span>
+                  <small id="password-hint">至少 8 个字符</small>
+                </span>
+                <span class="field-input">
+                  <i data-lucide="lock-keyhole"></i>
+                  <input
+                    id="auth-password"
+                    name="password"
+                    type="password"
+                    placeholder="输入密码"
+                    autocomplete="current-password"
+                    minlength="8"
+                    maxlength="72"
+                    required
+                  />
+                </span>
+              </label>
+
+              <div id="password-strength" class="password-strength" data-strength="empty" hidden>
+                <span class="strength-track"><i></i><i></i><i></i></span>
+                <small id="password-strength-label">请输入密码</small>
+              </div>
+
+              <label id="confirm-password-field" class="field" hidden>
+                <span class="field-label">
+                  <span>确认密码</span>
+                  <small id="confirm-password-status">再次输入密码</small>
+                </span>
+                <span class="field-input">
+                  <i data-lucide="shield-check"></i>
+                  <input
+                    id="auth-password-confirm"
+                    name="password_confirm"
+                    type="password"
+                    placeholder="再次输入密码"
+                    autocomplete="new-password"
+                    minlength="8"
+                    maxlength="72"
+                  />
+                </span>
+              </label>
+
+              <p id="auth-error" class="auth-error" role="alert" hidden></p>
+
+              <button id="auth-submit" class="auth-submit" type="submit">
+                <span>登录</span>
+                <i data-lucide="arrow-up"></i>
+              </button>
+            </form>
+
+            <p class="auth-switch-note">
+              <span id="auth-switch-copy">还没有账号？</span>
+              <button id="auth-mode-switch" type="button" data-auth-mode="register">
+                立即注册
+              </button>
+            </p>
+          </section>
+        </div>
+      </section>
+
+      <div id="app-shell" class="app-shell" hidden>
+        <aside id="history-sidebar" class="history-sidebar" aria-label="历史会话">
+          <div class="sidebar-header">
+            <div class="brand">
+              <span class="brand-mark">
+                <i data-lucide="bot"></i>
+              </span>
+              <span class="brand-copy">
+                <strong>DataPilot</strong>
+                <span id="connection-status" class="connection-status is-connecting">
+                  <span class="status-dot"></span>
+                  连接中
+                </span>
+              </span>
+            </div>
+            <button id="close-history" class="icon-button mobile-only" type="button" title="关闭历史">
+              <i data-lucide="x"></i>
+            </button>
+          </div>
+
+          <button id="new-session" class="new-session-button" type="button">
+            <i data-lucide="plus"></i>
+            新建会话
+          </button>
+          <button id="upload-dataset" class="upload-dataset-button" type="button">
+            <i data-lucide="upload"></i>
+            上传数据文件
+          </button>
+
+          <div class="history-heading">
+            <span>历史对话</span>
+            <span id="session-count">0</span>
+          </div>
+          <div id="session-list" class="session-list"></div>
+
+          <div class="sidebar-footer">
+            <span id="current-username">用户</span>
+            <button id="logout-button" class="logout-button" type="button">
+              <i data-lucide="log-out"></i>
+              退出
+            </button>
+          </div>
+        </aside>
+
+        <button
+          id="sidebar-overlay"
+          class="sidebar-overlay"
+          type="button"
+          aria-label="关闭历史"
+          hidden
+        ></button>
+
+        <div class="workspace">
+          <header class="topbar">
+            <button
+              id="history-toggle"
+              class="icon-button mobile-only"
+              type="button"
+              title="查看历史"
+              aria-controls="history-sidebar"
+              aria-expanded="false"
+            >
+              <i data-lucide="menu"></i>
+            </button>
+
+            <div class="current-session">
+              <span class="current-label">当前会话</span>
+              <strong id="current-session-title">新会话</strong>
+            </div>
+
+            <div class="topbar-actions">
+              <button id="trace-toggle" class="icon-button mobile-only" type="button" title="查看执行轨迹">
+                <i data-lucide="activity"></i>
+              </button>
+              <button id="new-session-top" class="icon-button desktop-only" type="button" title="新建会话">
+                <i data-lucide="square-pen"></i>
+              </button>
+            </div>
+          </header>
+
+          <main id="chat-scroll" class="chat-scroll">
+            <section id="empty-state" class="empty-state">
+              <span class="empty-icon">
+                <i data-lucide="sparkles"></i>
+              </span>
+              <h1>今天想分析什么经营问题？</h1>
+              <p>我会先制定分析计划，再执行受控 SQL、核对证据并输出图表与结论。</p>
+              <div class="suggestions" aria-label="快捷提问">
+                <button type="button" data-prompt="分析最近一个月 GMV 的变化，并按渠道拆解原因">
+                  分析最近一个月 GMV 变化
+                </button>
+                <button type="button" data-prompt="找出退款率最高的三个品类，并分析主要退款原因">
+                  拆解高退款品类
+                </button>
+                <button type="button" data-prompt="比较搜索广告和直播间的客单价与毛利表现">
+                  比较渠道经营质量
+                </button>
+              </div>
+            </section>
+            <div id="messages" class="message-list" aria-live="polite"></div>
+          </main>
+
+          <footer class="composer-wrap">
+            <form id="composer" class="composer">
+              <textarea
+                id="message-input"
+                rows="1"
+                maxlength="32768"
+                placeholder="输入消息"
+                aria-label="消息内容"
+              ></textarea>
+              <div class="composer-actions">
+                <div class="composer-tools">
+                  <label class="dataset-picker" for="dataset-select">
+                    <i data-lucide="database"></i>
+                    <select id="dataset-select" title="选择本次分析使用的知识来源">
+                      <option value="">内置电商数据</option>
+                    </select>
+                  </label>
+                  <div id="dataset-actions" class="dataset-actions" hidden>
+                    <button
+                      id="rename-dataset"
+                      class="dataset-action"
+                      type="button"
+                      title="重命名知识库"
+                    >
+                      <i data-lucide="pencil"></i>
+                    </button>
+                    <button
+                      id="delete-dataset"
+                      class="dataset-action dataset-action--danger"
+                      type="button"
+                      title="删除知识库"
+                    >
+                      <i data-lucide="trash-2"></i>
+                    </button>
+                  </div>
+                  <span class="composer-hint">只读查询，结果请核对</span>
+                </div>
+                <div class="buttons">
+                  <button id="stop-generation" class="stop-button" type="button" hidden>
+                    <i data-lucide="square"></i>
+                    停止
+                  </button>
+                  <button id="send-message" class="send-button" type="submit" disabled title="发送消息">
+                    <i data-lucide="arrow-up"></i>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </footer>
+        </div>
+
+        <aside id="trace-panel" class="trace-panel" aria-label="Agent 执行轨迹">
+          <header class="trace-header">
+            <div>
+              <span>Agent Runtime</span>
+              <strong>执行轨迹</strong>
+            </div>
+            <button id="close-trace" class="icon-button mobile-only" type="button" title="关闭执行轨迹">
+              <i data-lucide="x"></i>
+            </button>
+          </header>
+          <div id="trace-summary" class="trace-summary">
+            <span class="trace-empty">发送分析问题后，这里会展示计划、SQL、工具结果和产物。</span>
+          </div>
+          <div id="trace-list" class="trace-list"></div>
+        </aside>
+        <button
+          id="trace-overlay"
+          class="sidebar-overlay trace-overlay"
+          type="button"
+          aria-label="关闭执行轨迹"
+          hidden
+        ></button>
+
+        <div id="dataset-modal" class="modal" hidden>
+          <button id="dataset-modal-backdrop" class="modal-backdrop" type="button" aria-label="关闭"></button>
+          <section class="dataset-dialog" role="dialog" aria-modal="true" aria-labelledby="dataset-dialog-title">
+            <header class="dataset-dialog-head">
+              <span class="dataset-dialog-icon">
+                <i data-lucide="file-spreadsheet"></i>
+              </span>
+              <div>
+                <h2 id="dataset-dialog-title">上传数据文件</h2>
+                <p>文档建立知识库，Excel 建立可分析的私有数据表</p>
+              </div>
+              <button id="close-dataset-modal" class="icon-button" type="button" title="关闭">
+                <i data-lucide="x"></i>
+              </button>
+            </header>
+
+            <form id="dataset-form" class="dataset-form">
+              <label class="field">
+                <span class="field-label">
+                  <span>数据名称</span>
+                  <small>用于聊天时选择数据源</small>
+                </span>
+                <span class="field-input">
+                  <i data-lucide="database"></i>
+                  <input
+                    id="dataset-name"
+                    name="name"
+                    type="text"
+                    maxlength="100"
+                    placeholder="例如：订单明细或退款政策"
+                  />
+                </span>
+              </label>
+
+              <label class="dataset-dropzone" for="dataset-file">
+                <i data-lucide="file-text"></i>
+                <strong id="dataset-file-name">选择数据文件</strong>
+                <span>支持 .md、.markdown、.txt、.docx、.xlsx</span>
+                <input
+                  id="dataset-file"
+                  name="file"
+                  type="file"
+                  accept=".md,.markdown,.txt,.docx,.xlsx"
+                  required
+                />
+              </label>
+
+              <p id="dataset-error" class="auth-error" role="alert" hidden></p>
+
+              <button id="dataset-submit" class="auth-submit" type="submit">
+                <span>上传并建立数据集</span>
+                <i data-lucide="upload"></i>
+              </button>
+            </form>
+          </section>
+        </div>
+
+        <div id="rename-dataset-modal" class="modal" hidden>
+          <button
+            id="rename-dataset-backdrop"
+            class="modal-backdrop"
+            type="button"
+            aria-label="关闭"
+          ></button>
+          <section
+            class="dataset-dialog dataset-dialog--compact"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="rename-dataset-title"
+          >
+            <header class="dataset-dialog-head">
+              <span class="dataset-dialog-icon">
+                <i data-lucide="pencil"></i>
+              </span>
+              <div>
+                <h2 id="rename-dataset-title">重命名知识库</h2>
+                <p>只修改显示名称，不改变向量内容</p>
+              </div>
+              <button id="close-rename-dataset" class="icon-button" type="button" title="关闭">
+                <i data-lucide="x"></i>
+              </button>
+            </header>
+
+            <form id="rename-dataset-form" class="dataset-form">
+              <label class="field">
+                <span class="field-label">
+                  <span>文档名称</span>
+                  <small>最多 100 个字符</small>
+                </span>
+                <span class="field-input">
+                  <i data-lucide="database"></i>
+                  <input
+                    id="rename-dataset-name"
+                    name="name"
+                    type="text"
+                    maxlength="100"
+                    placeholder="输入新的文档名称"
+                    required
+                  />
+                </span>
+              </label>
+
+              <p id="rename-dataset-error" class="auth-error" role="alert" hidden></p>
+
+              <button id="rename-dataset-submit" class="auth-submit" type="submit">
+                <span>保存名称</span>
+                <i data-lucide="check"></i>
+              </button>
+            </form>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

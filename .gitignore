@@ -1,0 +1,11 @@
+.env
+.idea/
+.vscode/
+frontend/node_modules/
+frontend/dist/
+volumes/
+artifacts/
+qa/
+.resume_*/
+*.exe
+*.log

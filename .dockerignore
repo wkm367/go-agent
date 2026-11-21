@@ -1,0 +1,10 @@
+.git
+.idea
+.vscode
+volumes
+frontend
+chat.html
+*.png
+*.md
+!document.md
+npm-debug.log*
